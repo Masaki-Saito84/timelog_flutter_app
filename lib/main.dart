@@ -29,6 +29,9 @@ class WorkingHour extends StatefulWidget {
 class _WorkingHour extends State<WorkingHour> {
   String _workStartTime = '';
   String _workEndTime = '';
+  String _time = '';
+  var swatch = Stopwatch();
+  final duration = Duration(seconds: 1);
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +73,26 @@ class _WorkingHour extends State<WorkingHour> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+  void startTimer() {
+    Timer(duration, keepRunning);
+  }
+  void keepRunning() {
+    if(swatch.isRunning) {
+      startTimer();
+    }
+    setState(() {
+      _time = swatch.elapsed.inHours.toString().padLeft(2,"0") +':'
+        + (swatch.elapsed.inMinutes%60).toString().padLeft(2,"0") +':'
+        + (swatch.elapsed.inSeconds%60).toString().padLeft(2,"0");
+    });
+  }
   void setWorkStartTime() {
     var now = DateTime.now();
     var dateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
     var timeString = dateFormat.format(now);
+    _time = '00:00:00';
+    swatch.start();
+    startTimer();
     setState(() {
       _workStartTime = timeString;
     });
@@ -82,14 +101,17 @@ class _WorkingHour extends State<WorkingHour> {
     var now = DateTime.now();
     var dateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
     var timeString = dateFormat.format(now);
+    swatch.stop();
     setState(() {
       _workEndTime = timeString;
     });
   }
   void allTimeClear() {
+    swatch.reset();
     setState(() {
       _workStartTime = '';
       _workEndTime = '';
+      _time = '';
     });
   }
 }
