@@ -59,6 +59,8 @@ class _WorkingHour extends State<WorkingHour> {
         onPressed: () {
           if(_workStartTime == '') {
             setWorkStartTime();
+          } else if(_workStartTime != '' && _workEndTime != '') {
+            allTimeClear();
           } else {
             setWorkEndTime();
           }
@@ -82,6 +84,12 @@ class _WorkingHour extends State<WorkingHour> {
     var timeString = dateFormat.format(now);
     setState(() {
       _workEndTime = timeString;
+    });
+  }
+  void allTimeClear() {
+    setState(() {
+      _workStartTime = '';
+      _workEndTime = '';
     });
   }
 }
