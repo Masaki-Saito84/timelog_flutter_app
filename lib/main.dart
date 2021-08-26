@@ -40,23 +40,69 @@ class _WorkingHour extends State<WorkingHour> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            if (_workStartTime != '')
-              Text(
-                '開始時刻\n$_workStartTime',
-              ),
-            if (_workStartTime != '')
-              Text(
-                '労働時間\n$_time',
-              ),
-            if (_workEndTime != '')
-              Text(
-                '終了時刻\n$_workEndTime',
-              ),
-          ],
-        ),
+        child: (
+          () {
+            if (_workStartTime != '') {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('労働時間\n$_time'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '開始時刻\n$_workStartTime',
+                          ),
+                          ElevatedButton(
+                            child: Text(
+                              '勤務開始時間 編集',
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1,
+                              ),
+                            ),
+                            onPressed: () {
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 26),
+                            ),
+                          )
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _workEndTime != '' ? '終了時刻\n' + _workEndTime : '終了時刻\n' + getNowDate() + '\n--:--'
+                          ),
+                          ElevatedButton(
+                            child: Text(
+                              '勤務終了時間 編集',
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1,
+                              ),
+                            ),
+                            onPressed: _workEndTime == '' && _workStartTime != '' ? null : () {
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 26),
+                            ),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ],
+              );
+            } else {
+              return Text('業務開始時に右下のボタンを押してください');
+            }
+          }()
+        )
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
