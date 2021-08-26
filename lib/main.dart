@@ -32,6 +32,7 @@ class _WorkingHour extends State<WorkingHour> {
   String _time = '';
   var swatch = Stopwatch();
   final duration = Duration(seconds: 1);
+  var workDateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -134,8 +135,7 @@ class _WorkingHour extends State<WorkingHour> {
   }
   void setWorkStartTime() {
     var now = DateTime.now();
-    var dateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
-    var timeString = dateFormat.format(now);
+    var timeString = workDateFormat.format(now);
     _time = '00:00:00';
     swatch.start();
     startTimer();
@@ -145,8 +145,7 @@ class _WorkingHour extends State<WorkingHour> {
   }
   void setWorkEndTime() {
     var now = DateTime.now();
-    var dateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
-    var timeString = dateFormat.format(now);
+    var timeString = workDateFormat.format(now);
     swatch.stop();
     setState(() {
       _workEndTime = timeString;
