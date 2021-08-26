@@ -108,16 +108,23 @@ class _WorkingHour extends State<WorkingHour> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          if(_workStartTime == '') {
+          if(_workStartTime == '')
             setWorkStartTime();
-          } else if(_workStartTime != '' && _workEndTime != '') {
+          else if(_workStartTime != '' && _workEndTime != '')
             allTimeClear();
-          } else {
+          else
             setWorkEndTime();
-          }
         },
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        tooltip: 'WorkStateToggle',
+        child: (() {
+          if(_workStartTime == '') {
+            return Icon(Icons.play_arrow);
+          } else if(_workStartTime != '' && _workEndTime != '') {
+            return Icon(Icons.restart_alt);
+          } else {
+            return Icon(Icons.stop);
+          }
+        }) ()
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
