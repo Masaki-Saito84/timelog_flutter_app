@@ -81,8 +81,6 @@ class WorkingHour extends StatefulWidget {
 
 class _WorkingHour extends State<WorkingHour> {
   String _headTitle = '';
-  String _workStartTime = '';
-  String _workEndTime = '';
   String _time = '';
   var swatch = Stopwatch();
   final duration = Duration(seconds: 1);
@@ -180,21 +178,14 @@ class _WorkingHour extends State<WorkingHour> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
   String getNowDate() {
     var now = DateTime.now();
     var dateFormat = DateFormat('yyyy/MM/dd(E)');
     var timeString = dateFormat.format(now);
     return timeString;
   }
-  void setTitleForDate() {
-    setState(() {
-      _headTitle = getNowDate();
-    });
-  }
   @override
-  void initState() {
-    setTitleForDate();
-  }
   void startTimer() {
     Timer(duration, keepRunning);
   }
@@ -210,33 +201,16 @@ class _WorkingHour extends State<WorkingHour> {
   }
   void setWorkStartTime() {
     var now = DateTime.now();
-    var timeString = commonDateFormat.format(now);
     _time = '00:00:00';
     swatch.start();
     startTimer();
-    setState(() {
-      _workStartTime = timeString;
-      _headTitle = '勤務中';
-    });
   }
   void setWorkEndTime() {
     var now = DateTime.now();
-    var timeString = commonDateFormat.format(now);
     swatch.stop();
-    setTitleForDate();
     var workEndHeadTitle = _headTitle + ' 勤務詳細';
-    setState(() {
-      _workEndTime = timeString;
-      _headTitle = workEndHeadTitle;
-    });
   }
   void allTimeClear() {
     swatch.reset();
-    setTitleForDate();
-    setState(() {
-      _workStartTime = '';
-      _workEndTime = '';
-      _time = '';
-    });
   }
 }
