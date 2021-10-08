@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+var commonDateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm:ss');
+
 void main() {
   runApp(MyApp());
 }
@@ -34,7 +36,6 @@ class _WorkingHour extends State<WorkingHour> {
   String _time = '';
   var swatch = Stopwatch();
   final duration = Duration(seconds: 1);
-  var workDateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +160,7 @@ class _WorkingHour extends State<WorkingHour> {
   }
   void setWorkStartTime() {
     var now = DateTime.now();
-    var timeString = workDateFormat.format(now);
+    var timeString = commonDateFormat.format(now);
     _time = '00:00:00';
     swatch.start();
     startTimer();
@@ -170,7 +171,7 @@ class _WorkingHour extends State<WorkingHour> {
   }
   void setWorkEndTime() {
     var now = DateTime.now();
-    var timeString = workDateFormat.format(now);
+    var timeString = commonDateFormat.format(now);
     swatch.stop();
     setTitleForDate();
     var workEndHeadTitle = _headTitle + ' 勤務詳細';
