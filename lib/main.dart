@@ -72,16 +72,10 @@ void main() {
   );
 }
 
-class WorkingHour extends StatefulWidget {
-  WorkingHour({Key? key, required this.title}) : super(key: key);
-  final String title;
-  @override
-  _WorkingHour createState() => _WorkingHour();
-}
-
-class _WorkingHour extends State<WorkingHour> {
+class WorkLog extends StatelessWidget {
   String _headTitle = '';
   String _time = '';
+
   var swatch = Stopwatch();
   final duration = Duration(seconds: 1);
 
@@ -92,90 +86,102 @@ class _WorkingHour extends State<WorkingHour> {
         title: Text(_headTitle),
       ),
       body: Center(
-        child: (
-          () {
-            if (_workStartTime != '') {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Consumer2<DutyStore, OnDutyStateNotifier>(builder: (context, dutyStore, onDutyState, _) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if(onDutyState.attend['start'] != '') Text('勤務時間'),
+              if(onDutyState.attend['start'] != '') Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('労働時間\n$_time'),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '開始時刻\n$_workStartTime',
-                          ),
-                          ElevatedButton(
-                            child: Text(
-                              '勤務開始時間 編集',
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1,
-                              ),
-                            ),
-                            onPressed: () {
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 26),
-                            ),
-                          )
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _workEndTime != '' ? '終了時刻\n' + _workEndTime : '終了時刻\n' + getNowDate() + '\n--:--'
-                          ),
-                          ElevatedButton(
-                            child: Text(
-                              '勤務終了時間 編集',
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1,
-                              ),
-                            ),
-                            onPressed: _workEndTime == '' && _workStartTime != '' ? null : () {
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 26),
-                            ),
-                          )
-                        ],
-                      )
-                    ],
+                  Text(
+                    '開始時刻\n' + onDutyState.attend['start'],
                   ),
+                  ElevatedButton(
+                    child: Text(
+                      '勤務開始時間 編集',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1,
+                      ),
+                    ),
+                    onPressed: () {
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 26),
+                    ),
+                  )
                 ],
-              );
-            } else {
-              return Text('業務開始時に右下のボタンを押してください');
-            }
-          }()
-        )
+              ),
+              if(!dutyStore.duty && onDutyState.attend['end'] != '') Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '終了時刻\n' + onDutyState.attend['end'],
+                  ),
+                  if (onDutyState.attend['end'] != '') ElevatedButton(
+                    child: Text(
+                      '勤務終了時間 編集',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1,
+                      ),
+                    ),
+                    onPressed: () {
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 26),
+                    ),
+                  )
+                ],
+              ),
+              if(onDutyState.attend['start'] == '') Text('業務開始時に右下のボタンを押してください')
+            ],
+          );
+        })
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if(_workStartTime == '')
-            setWorkStartTime();
-          else if(_workStartTime != '' && _workEndTime != '')
-            allTimeClear();
-          else
-            setWorkEndTime();
-        },
-        tooltip: 'WorkStateToggle',
-        child: (() {
-          if(_workStartTime == '') {
-            return Icon(Icons.play_arrow);
-          } else if(_workStartTime != '' && _workEndTime != '') {
-            return Icon(Icons.restart_alt);
-          } else {
-            return Icon(Icons.stop);
-          }
-        }) ()
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: Container(
+        child: Consumer2<DutyStore, OnDutyStateNotifier>(builder: (context, dutyStore, onDutyState,  _) {
+          return Column(
+            verticalDirection: VerticalDirection.up,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton(
+                onPressed: () {
+                  if(onDutyState.attend['start'] == '') {
+                    dutyStore.toggleDuty();
+                    onDutyState.addStartTime();
+                  } else if(onDutyState.attend['start'] != '' && onDutyState.attend['end'] != '') {
+                    onDutyState.reset();
+                  } else {
+                    dutyStore.toggleDuty();
+                    onDutyState.addEndTime();
+                  }
+                },
+                tooltip: 'WorkStateToggle',
+                child: (() {
+                  if(onDutyState.attend['start'] == '') {
+                    return Icon(Icons.play_arrow);
+                  } else if(onDutyState.attend['start'] != '' && onDutyState.attend['end'] != '') {
+                    return Icon(Icons.restart_alt);
+                  } else {
+                    return Icon(Icons.stop);
+                  }
+                }) (),
+              ),
+              if(dutyStore.duty) Container(
+                margin: EdgeInsets.only(bottom: 16.0),
+                child: FloatingActionButton(
+                  onPressed: () {},
+                  child: (() {
+                    return Icon(Icons.alarm_add);
+                  })(),
+                ),
+              )
+            ],
+          );
+        }),
+      )
     );
   }
 
