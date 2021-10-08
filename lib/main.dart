@@ -20,6 +20,37 @@ class DutyStore extends ChangeNotifier {
 
 }
 
+class OnDutyStateNotifier extends ChangeNotifier {
+  Map<String, dynamic> attend = {};
+
+  OnDutyStateNotifier() {
+    init();
+  }
+
+  void init() {
+    attend = {
+      'start': '',
+      'end': '',
+      'breaks': [],
+    };
+  }
+
+  void addStartTime() {
+    attend['start'] = nowTime();
+    notifyListeners();
+  }
+
+  void addEndTime() {
+    attend['end'] = nowTime();
+    notifyListeners();
+  }
+
+  void reset() {
+    init();
+    notifyListeners();
+  }
+}
+
 void main() {
   runApp(MyApp());
 }
