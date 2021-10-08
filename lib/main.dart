@@ -5,6 +5,11 @@ import 'package:provider/provider.dart';
 
 var commonDateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm:ss');
 
+String nowTime() {
+  var now = DateTime.now();
+  return commonDateFormat.format(now);
+}
+
 void main() {
   runApp(MyApp());
 }
