@@ -10,6 +10,16 @@ String nowTime() {
   return commonDateFormat.format(now);
 }
 
+class DutyStore extends ChangeNotifier {
+  bool duty = false;
+
+  void toggleDuty() {
+    duty = duty ? false : true;
+    notifyListeners();
+  }
+
+}
+
 void main() {
   runApp(MyApp());
 }
