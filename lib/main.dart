@@ -52,20 +52,24 @@ class OnDutyStateNotifier extends ChangeNotifier {
 }
 
 void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<DutyStore>(
+          create: (context) => DutyStore(),
+        ),
+        ChangeNotifierProvider<OnDutyStateNotifier>(
+          create: (context) => OnDutyStateNotifier(),
+        ),
+      ],
+      child: MaterialApp(
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: WorkLog(),
       ),
-      home: WorkingHour(title: 'Flutter Demo Home Page'),
-    );
-  }
+    ),
+  );
 }
 
 class WorkingHour extends StatefulWidget {
