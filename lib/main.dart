@@ -15,10 +15,27 @@ String nowTime() {
 }
 
 class DutyStore extends ChangeNotifier {
-  bool duty = false;
+  String? duty;
 
-  void toggleDuty() {
-    duty = duty ? false : true;
+  DutyStore() {
+    init();
+  }
+
+  void init() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('duty') == null) {
+      duty = 'off';
+      prefs.setString('duty', 'off');
+    } else {
+      duty = prefs.getString('duty');
+    }
+    notifyListeners();
+  }
+
+  void setDuty(String state) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    duty = state;
+    prefs.setString('duty', state);
     notifyListeners();
   }
 
@@ -153,12 +170,12 @@ class WorkLog extends StatelessWidget {
               FloatingActionButton(
                 onPressed: () {
                   if(onDutyState.attend['start'] == '') {
-                    dutyStore.toggleDuty();
+                    dutyStore.setDuty('on');
                     onDutyState.addStartTime();
                   } else if(onDutyState.attend['start'] != '' && onDutyState.attend['end'] != '') {
                     onDutyState.reset();
                   } else {
-                    dutyStore.toggleDuty();
+                    dutyStore.setDuty('off');
                     onDutyState.addEndTime();
                   }
                 },
