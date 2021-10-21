@@ -192,10 +192,10 @@ class WorkLog extends StatelessWidget {
             children: [
               FloatingActionButton(
                 onPressed: () {
-                  if(onDutyState.attend['start'] == '') {
+                  if(onDutyState.attend!.start == '') {
                     dutyStore.setDuty('on');
                     onDutyState.addStartTime();
-                  } else if(onDutyState.attend['start'] != '' && onDutyState.attend['end'] != '') {
+                  } else if(onDutyState.attend!.start != '' && onDutyState.attend!.end != '') {
                     onDutyState.reset();
                   } else {
                     dutyStore.setDuty('off');
@@ -204,16 +204,16 @@ class WorkLog extends StatelessWidget {
                 },
                 tooltip: 'WorkStateToggle',
                 child: (() {
-                  if(onDutyState.attend['start'] == '') {
+                  if(onDutyState.attend!.start == '') {
                     return Icon(Icons.play_arrow);
-                  } else if(onDutyState.attend['start'] != '' && onDutyState.attend['end'] != '') {
+                  } else if(onDutyState.attend!.start != '' && onDutyState.attend!.end != '') {
                     return Icon(Icons.restart_alt);
                   } else {
                     return Icon(Icons.stop);
                   }
                 }) (),
               ),
-              if(dutyStore.duty) Container(
+              if(dutyStore.duty == 'on') Container(
                 margin: EdgeInsets.only(bottom: 16.0),
                 child: FloatingActionButton(
                   onPressed: () {},
