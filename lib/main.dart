@@ -109,6 +109,31 @@ class OnDutyStateNotifier extends ChangeNotifier {
   }
 }
 
+Widget timeRow(String label, String date) {
+  final parseDate = DateTime.parse(date);
+  final outputDate = outputDateFormat(parseDate);
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label + '\n' + outputDate),
+      ElevatedButton(
+        child: Text(
+          '編集',
+          style: TextStyle(
+            fontSize: 12,
+            height: 1,
+          ),
+        ),
+        onPressed: () {
+        },
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 26),
+        ),
+      )
+    ],
+  );
+}
+
 void main() {
   runApp(
     MultiProvider(
@@ -150,52 +175,11 @@ class WorkLog extends StatelessWidget {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if(onDutyState.attend['start'] != '') Text('勤務時間'),
-              if(onDutyState.attend['start'] != '') Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '開始時刻\n' + onDutyState.attend['start'],
-                  ),
-                  ElevatedButton(
-                    child: Text(
-                      '勤務開始時間 編集',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1,
-                      ),
-                    ),
-                    onPressed: () {
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 26),
-                    ),
-                  )
-                ],
+              if(onDutyState.attend.start != '') Text('勤務時間'),
+              if(onDutyState.attend.start != '') timeRow('開始時刻', onDutyState.attend!.start.toString()),
+              if(dutyStore.duty == 'off' && onDutyState.attend!.end != '') timeRow('終了時刻', onDutyState.attend!.end.toString()),
+              if(onDutyState.attend!.start == '' && dutyStore.duty == 'off') Text('業務開始時に右下のボタンを押してください'),
               ),
-              if(!dutyStore.duty && onDutyState.attend['end'] != '') Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '終了時刻\n' + onDutyState.attend['end'],
-                  ),
-                  if (onDutyState.attend['end'] != '') ElevatedButton(
-                    child: Text(
-                      '勤務終了時間 編集',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1,
-                      ),
-                    ),
-                    onPressed: () {
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 26),
-                    ),
-                  )
-                ],
-              ),
-              if(onDutyState.attend['start'] == '') Text('業務開始時に右下のボタンを押してください')
             ],
           );
         })
