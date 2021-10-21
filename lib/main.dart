@@ -179,6 +179,31 @@ class WorkLog extends StatelessWidget {
               if(onDutyState.attend.start != '') timeRow('開始時刻', onDutyState.attend!.start.toString()),
               if(dutyStore.duty == 'off' && onDutyState.attend!.end != '') timeRow('終了時刻', onDutyState.attend!.end.toString()),
               if(onDutyState.attend!.start == '' && dutyStore.duty == 'off') Text('業務開始時に右下のボタンを押してください'),
+              if(!onDutyState.attend!.breaks.every((acquiredBreak) => acquiredBreak.start == '' && acquiredBreak.end == '')) Expanded(
+                child: ListView.builder(
+                  itemCount: onDutyState.attend!.breaks.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (!(onDutyState.attend!.breaks[index].start.toString() =='' && onDutyState.attend!.breaks[index].end.toString() == '')) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '休憩' + (index + 1).toString(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1,
+                            ),
+                          ),
+                          timeRow('開始時刻', onDutyState.attend!.breaks[index].start.toString()),
+                          if(onDutyState.attend!.breaks[index].end.toString() == '') Text('休憩中'),
+                          if(onDutyState.attend!.breaks[index].end.toString() != '') timeRow('終了時刻', onDutyState.attend!.breaks[index].end.toString()),
+                        ],
+                      );
+                    } else {
+                      return SizedBox.shrink();
+                    }
+                  }
+                )
               ),
             ],
           );
@@ -186,6 +211,7 @@ class WorkLog extends StatelessWidget {
       ),
       floatingActionButton: Container(
         child: Consumer2<DutyStore, OnDutyStateNotifier>(builder: (context, dutyStore, onDutyState,  _) {
+          bool onBreak = onDutyState.attend!.breaks.any((acquiredBreak) => acquiredBreak.start != '' && acquiredBreak.end == '');
           return Column(
             verticalDirection: VerticalDirection.up,
             mainAxisSize: MainAxisSize.min,
@@ -200,6 +226,9 @@ class WorkLog extends StatelessWidget {
                   } else {
                     dutyStore.setDuty('off');
                     onDutyState.addEndTime();
+                    if (onBreak) {
+                      onDutyState.addBreakEndTime();
+                    }
                   }
                 },
                 tooltip: 'WorkStateToggle',
@@ -216,9 +245,19 @@ class WorkLog extends StatelessWidget {
               if(dutyStore.duty == 'on') Container(
                 margin: EdgeInsets.only(bottom: 16.0),
                 child: FloatingActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    if (onBreak) {
+                      onDutyState.addBreakEndTime();
+                    } else {
+                      onDutyState.addBreakStartTime();
+                    }
+                  },
                   child: (() {
-                    return Icon(Icons.alarm_add);
+                    if (onBreak) {
+                      return Icon(Icons.alarm_on);
+                    } else {
+                      return Icon(Icons.alarm_add);
+                    }
                   })(),
                 ),
               )
