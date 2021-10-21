@@ -7,11 +7,14 @@ import 'dart:convert';
 import 'work_logs.dart';
 import 'breaks.dart';
 
-var commonDateFormat = DateFormat('yyyy/MM/dd(E)\nHH:mm:ss');
+String outputDateFormat(DateTime date) {
+  final outputFormat = DateFormat('yyyy/MM/dd(E) HH:mm:ss');
+  return outputFormat.format(date);
+}
 
-String nowTime() {
-  var now = DateTime.now();
-  return commonDateFormat.format(now);
+String purseableDateFormat (DateTime date) {
+  final purseableFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+  return purseableFormat.format(date);
 }
 
 class DutyStore extends ChangeNotifier {
@@ -206,12 +209,6 @@ class WorkLog extends StatelessWidget {
     );
   }
 
-  String getNowDate() {
-    var now = DateTime.now();
-    var dateFormat = DateFormat('yyyy/MM/dd(E)');
-    var timeString = dateFormat.format(now);
-    return timeString;
-  }
   @override
   void startTimer() {
     Timer(duration, keepRunning);
