@@ -45,31 +45,65 @@ class DutyStore extends ChangeNotifier {
 }
 
 class OnDutyStateNotifier extends ChangeNotifier {
-  Map<String, dynamic> attend = {};
+  var attend;
 
   OnDutyStateNotifier() {
     init();
   }
 
-  void init() {
-    attend = {
-      'start': '',
-      'end': '',
-      'breaks': [],
-    };
+  void init() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if(prefs.getString('work_logs') == null) {
+      attend = WorkLogs('','', [Breaks('', '',)],);
+      prefs.setString('work_logs', json.encode(attend!.toJson()));
+    } else {
+      final decodePrefs = json.decode(prefs.getString('work_logs').toString());
+      attend = WorkLogs(decodePrefs['start'], decodePrefs['end'], [Breaks(decodePrefs['breaks'][0]['start'], decodePrefs['breaks'][0]['start'])]);
+    }
   }
 
   void addStartTime() {
-    attend['start'] = nowTime();
+    attend!.start = purseableDateFormat(DateTime.now());
+    notifyListeners();
+    setPrefs();
+  }
+
+  void addEndTime()  {
+    attend!.end = purseableDateFormat(DateTime.now());
+    notifyListeners();
+    setPrefs();
+  }
+
+  void addBreakStartTime() {
+    attend!.breaks.forEach((acquiredBreak) {
+      if (acquiredBreak.start == '') {
+        acquiredBreak.start = purseableDateFormat(DateTime.now());
+        setPrefs();
+        notifyListeners();
+      }
+    });
+  }
+
+  void addBreakEndTime() {
+    attend!.breaks.forEach((acquiredBreak) {
+      if (acquiredBreak.end == '') {
+        acquiredBreak.end = purseableDateFormat(DateTime.now());
+      }
+    });
+    attend!.breaks.add(Breaks('', ''));
+    setPrefs();
     notifyListeners();
   }
 
-  void addEndTime() {
-    attend['end'] = nowTime();
-    notifyListeners();
+  void setPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('work_logs', json.encode(attend!.toJson()));
+    final decodePrefs = json.decode(prefs.getString('work_logs').toString());
   }
 
-  void reset() {
+  void reset() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('work_logs');
     init();
     notifyListeners();
   }
@@ -86,12 +120,14 @@ void main() {
           create: (context) => OnDutyStateNotifier(),
         ),
       ],
-      child: MaterialApp(
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: WorkLog(),
-      ),
+      builder: (context, _) {
+        return MaterialApp(
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: WorkLog(),
+        );
+      },
     ),
   );
 }
