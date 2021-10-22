@@ -12,11 +12,6 @@ String dateFormat(DateTime date) {
   return outputFormat.format(date);
 }
 
-String purseableDateFormat (DateTime date) {
-  final purseableFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
-  return purseableFormat.format(date);
-}
-
 class ProceedingStore extends ChangeNotifier {
   String? duty;
 
