@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'work_logs.dart';
 import 'breaks.dart';
 
-String outputDateFormat(DateTime date) {
+String dateFormat(DateTime date) {
   final outputFormat = DateFormat('yyyy/MM/dd(E) HH:mm:ss');
   return outputFormat.format(date);
 }
@@ -45,7 +45,16 @@ class ProceedingStore extends ChangeNotifier {
 }
 
 class OnDutyStateNotifier extends ChangeNotifier {
-  var attend;
+  WorkLogs attend = WorkLogs(
+    new DateTime(1),
+    new DateTime(1),
+    [
+      Breaks(
+        new DateTime(1),
+        new DateTime(1),
+      )
+    ],
+  );
 
   OnDutyStateNotifier() {
     init();
@@ -53,31 +62,50 @@ class OnDutyStateNotifier extends ChangeNotifier {
 
   void init() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    if(prefs.getString('work_logs') == null) {
-      attend = WorkLogs('','', [Breaks('', '',)],);
-      prefs.setString('work_logs', json.encode(attend!.toJson()));
+    if (prefs.getString('work_logs') == null) {
+      attend = WorkLogs(
+        new DateTime(1),
+        new DateTime(1),
+        [
+          Breaks(
+            new DateTime(1),
+            new DateTime(1),
+          )
+        ],
+      );
+      prefs.setString('work_logs', json.encode(attend.toJson()));
     } else {
-      final decodePrefs = json.decode(prefs.getString('work_logs').toString());
-      attend = WorkLogs(decodePrefs['start'], decodePrefs['end'], [Breaks(decodePrefs['breaks'][0]['start'], decodePrefs['breaks'][0]['start'])]);
+      final decodePrefs =
+          await json.decode(prefs.getString('work_logs').toString());
+      final String start = await decodePrefs['start'];
+      final String end = await decodePrefs['end'];
+      final List<Breaks> breaks = await decodePrefs['breaks']
+          .map<Breaks>((breakInfo) => new Breaks(
+              DateTime.parse(breakInfo['start']),
+              DateTime.parse(breakInfo['end'])))
+          .toList();
+
+      attend = WorkLogs(DateTime.parse(start), DateTime.parse(end), breaks);
     }
+    notifyListeners();
   }
 
   void addStartTime() {
-    attend!.start = purseableDateFormat(DateTime.now());
+    attend.start = DateTime.now();
     notifyListeners();
     setPrefs();
   }
 
-  void addEndTime()  {
-    attend!.end = purseableDateFormat(DateTime.now());
+  void addEndTime() {
+    attend.end = DateTime.now();
     notifyListeners();
     setPrefs();
   }
 
   void addBreakStartTime() {
-    attend!.breaks.forEach((acquiredBreak) {
-      if (acquiredBreak.start == '') {
-        acquiredBreak.start = purseableDateFormat(DateTime.now());
+    attend.breaks.forEach((acquiredBreak) {
+      if (acquiredBreak.start.year == 1) {
+        acquiredBreak.start = DateTime.now();
         setPrefs();
         notifyListeners();
       }
@@ -85,19 +113,19 @@ class OnDutyStateNotifier extends ChangeNotifier {
   }
 
   void addBreakEndTime() {
-    attend!.breaks.forEach((acquiredBreak) {
-      if (acquiredBreak.end == '') {
-        acquiredBreak.end = purseableDateFormat(DateTime.now());
+    attend.breaks.forEach((acquiredBreak) {
+      if (acquiredBreak.end.year == 1) {
+        acquiredBreak.end = DateTime.now();
       }
     });
-    attend!.breaks.add(Breaks('', ''));
+    attend.breaks.add(Breaks(new DateTime(1), new DateTime(1)));
     setPrefs();
     notifyListeners();
   }
 
   void setPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('work_logs', json.encode(attend!.toJson()));
+    prefs.setString('work_logs', json.encode(attend.toJson()));
   }
 
   void reset() async {
@@ -108,9 +136,8 @@ class OnDutyStateNotifier extends ChangeNotifier {
   }
 }
 
-Widget timeRow(String label, String date) {
-  final parseDate = DateTime.parse(date);
-  final outputDate = outputDateFormat(parseDate);
+Widget timeRow(String label, DateTime date) {
+  final outputDate = dateFormat(date);
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -165,9 +192,11 @@ class WorkLog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer2<ProceedingStore, OnDutyStateNotifier>(builder: (context, proceedingStore, onDutyState, _) {
-      bool isBreak = onDutyState.attend!.breaks.any((acquiredBreak) => acquiredBreak.start != '' && acquiredBreak.end == '');
-      bool isRecord = onDutyState.attend.start != '';
-      bool isResult = proceedingStore.duty == 'off' && onDutyState.attend!.end != '';
+      WorkLogs attend = onDutyState.attend;
+      bool isBreak = attend.breaks.any((acquiredBreak) =>
+          acquiredBreak.start.year != 1 && acquiredBreak.end.year == 1);
+      bool isRecord = attend.start.year != 1;
+      bool isResult = proceedingStore.duty == 'off' && attend.end.year != 1;
       String _headTitle = '';
 
       if (proceedingStore.duty == 'on') {
@@ -177,8 +206,7 @@ class WorkLog extends StatelessWidget {
         }
       } else {
         if (isResult) {
-          _headTitle = DateFormat('yyyy/M/d (E)')
-              .format(DateTime.parse(onDutyState.attend!.start));
+          _headTitle = DateFormat('yyyy/M/d (E)').format(attend.start);
         } else {
           _headTitle = DateFormat('yyyy/M/d (E)').format(DateTime.now());
         }
@@ -191,80 +219,83 @@ class WorkLog extends StatelessWidget {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if(proceedingStore.duty == 'on') Text('勤務時間'),
-            if(isRecord) timeRow('開始時刻', onDutyState.attend!.start.toString()),
-            if(isResult) timeRow('終了時刻', onDutyState.attend!.end.toString()),
-            if(!isRecord && proceedingStore.duty == 'off') Text('業務開始時に右下のボタンを押してください'),
-            if(isRecord || isResult) Expanded(
-              child: ListView.builder(
-                itemCount: onDutyState.attend!.breaks.length,
-                itemBuilder: (BuildContext context, int index) {
-                  bool isInitBreak = onDutyState.attend!.breaks[index].start.toString() == '' && onDutyState.attend!.breaks[index].end.toString() == '';
-                  if (!isInitBreak) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if(isBreak) Text('休憩中'),
-                        Text('休憩' + (index + 1).toString()),
-                        timeRow('開始時刻', onDutyState.attend!.breaks[index].start.toString()),
-                        if(onDutyState.attend!.breaks[index].end.toString() != '') timeRow('終了時刻', onDutyState.attend!.breaks[index].end.toString()),
-                      ],
-                    );
-                  } else if(isResult) {
-                    return ElevatedButton(
-                      child: Text(
-                        '休憩記録を追加',
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1,
-                        ),
-                      ),
-                      onPressed: () {
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 26),
-                      ),
-                    );
-                  } else {
-                    return SizedBox.shrink();
-                  }
-                }
-              )
-            ),
+            if (proceedingStore.duty == 'on') Text('勤務時間'),
+            if (isRecord) timeRow('開始時刻', attend.start),
+            if (isResult) timeRow('終了時刻', attend.end),
+            if (!isRecord && proceedingStore.duty == 'off')
+              Text('業務開始時に右下のボタンを押してください'),
+            if (isRecord || isResult)
+              Expanded(
+                  child: ListView.builder(
+                      itemCount: attend.breaks.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final DateTime breakStart = attend.breaks[index].start;
+                        final DateTime breakEnd = attend.breaks[index].end;
+                        bool isInitBreak =
+                            breakStart.year == 1 && breakEnd.year == 1;
+                        if (!isInitBreak) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isBreak) Text('休憩中'),
+                              Text('休憩' + (index + 1).toString()),
+                              timeRow('開始時刻', breakStart),
+                              if (breakEnd.year != 1) timeRow('終了時刻', breakEnd),
+                            ],
+                          );
+                        } else if (isResult) {
+                          return ElevatedButton(
+                            child: Text(
+                              '休憩記録を追加',
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1,
+                              ),
+                            ),
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 26),
+                            ),
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      })),
           ],
         ),
         floatingActionButton: Container(
-          child: Column(
-            verticalDirection: VerticalDirection.up,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FloatingActionButton(
-                onPressed: () {
-                  if(!isRecord) {
-                    proceedingStore.setDuty('on');
-                    onDutyState.addStartTime();
-                  } else if(isResult) {
-                    onDutyState.reset();
-                  } else {
-                    proceedingStore.setDuty('off');
-                    onDutyState.addEndTime();
-                    if (isBreak) {
-                      onDutyState.addBreakEndTime();
-                    }
+            child: Column(
+          verticalDirection: VerticalDirection.up,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                if (!isRecord) {
+                  proceedingStore.setDuty('on');
+                  onDutyState.addStartTime();
+                } else if (isResult) {
+                  onDutyState.reset();
+                } else {
+                  proceedingStore.setDuty('off');
+                  onDutyState.addEndTime();
+                  if (isBreak) {
+                    onDutyState.addBreakEndTime();
                   }
-                },
-                tooltip: 'WorkStateToggle',
-                child: (() {
-                  if(onDutyState.attend!.start == '') {
-                    return Icon(Icons.play_arrow);
-                  } else if(onDutyState.attend!.start != '' && onDutyState.attend!.end != '') {
-                    return Icon(Icons.restart_alt);
-                  } else {
-                    return Icon(Icons.stop);
-                  }
-                }) (),
-              ),
-              if(proceedingStore.duty == 'on') Container(
+                }
+              },
+              tooltip: 'WorkStateToggle',
+              child: (() {
+                if (!isRecord) {
+                  return Icon(Icons.play_arrow);
+                } else if (isResult) {
+                  return Icon(Icons.restart_alt);
+                } else {
+                  return Icon(Icons.stop);
+                }
+              })(),
+            ),
+            if (proceedingStore.duty == 'on')
+              Container(
                 margin: EdgeInsets.only(bottom: 16.0),
                 child: FloatingActionButton(
                   onPressed: () {
@@ -283,9 +314,8 @@ class WorkLog extends StatelessWidget {
                   })(),
                 ),
               )
-            ],
-          )
-        ),
+          ],
+        )),
       );
     });
   }
