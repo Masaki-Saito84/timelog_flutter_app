@@ -220,6 +220,7 @@ class WorkLog extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (proceedingStore.duty == 'on') Text('勤務時間'),
+            if (isResult) Text('勤務時間\n' + totalDuty(attend)),
             if (isRecord) timeRow('開始時刻', attend.start),
             if (isResult) timeRow('終了時刻', attend.end),
             if (!isRecord && proceedingStore.duty == 'off')
@@ -238,6 +239,9 @@ class WorkLog extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               if (isBreak) Text('休憩中'),
+                              if (isResult && index == 0)
+                                Text('総休憩時間\n' +
+                                    totalBreaks(attend.breaks, true)),
                               Text('休憩' + (index + 1).toString()),
                               timeRow('開始時刻', breakStart),
                               if (breakEnd.year != 1) timeRow('終了時刻', breakEnd),
@@ -320,30 +324,67 @@ class WorkLog extends StatelessWidget {
     });
   }
 
+  totalBreaks(List<Breaks> breakLog, [bool toString = false]) {
+    var totalDuration;
+
+    breakLog.asMap().forEach((index, breakInfo) {
+      final DateTime start = breakInfo.start;
+      final DateTime end = breakInfo.end;
+      final duration = end.difference(start);
+      if (index == 0) {
+        totalDuration = duration;
+      } else {
+        totalDuration += duration;
+      }
+    });
+
+    if (toString) {
+      return totalDuration.toString().split('.').first.padLeft(8, "0");
+    }
+    return totalDuration;
+  }
+
+  String totalDuty(WorkLogs workLog) {
+    final DateTime start = workLog.start;
+    final DateTime end = workLog.end;
+    final List<Breaks> breaks = workLog.breaks;
+    var totalDuration = end.difference(start);
+
+    if (!breaks
+        .every((breaks) => breaks.start.year == 1 && breaks.end.year == 1)) {
+      totalDuration -= totalBreaks(breaks);
+    }
+    return totalDuration.toString().split('.').first.padLeft(8, "0");
+  }
+
   @override
   void startTimer() {
     Timer(duration, keepRunning);
   }
+
   void keepRunning() {
-    if(swatch.isRunning) {
+    if (swatch.isRunning) {
       startTimer();
     }
-    setState(() {
-      _time = swatch.elapsed.inHours.toString().padLeft(2,"0") +':'
-        + (swatch.elapsed.inMinutes%60).toString().padLeft(2,"0") +':'
-        + (swatch.elapsed.inSeconds%60).toString().padLeft(2,"0");
-    });
+    // setState(() {
+    //   _time = swatch.elapsed.inHours.toString().padLeft(2,"0") +':'
+    //     + (swatch.elapsed.inMinutes%60).toString().padLeft(2,"0") +':'
+    //     + (swatch.elapsed.inSeconds%60).toString().padLeft(2,"0");
+    // });
   }
+
   void setWorkStartTime() {
     var now = DateTime.now();
     _time = '00:00:00';
     swatch.start();
     startTimer();
   }
+
   void setWorkEndTime() {
     var now = DateTime.now();
     swatch.stop();
   }
+
   void allTimeClear() {
     swatch.reset();
   }
