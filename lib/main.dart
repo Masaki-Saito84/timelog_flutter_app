@@ -36,7 +36,6 @@ class ProceedingStore extends ChangeNotifier {
     prefs.setString('duty', state);
     notifyListeners();
   }
-
 }
 
 class OnDutyStateNotifier extends ChangeNotifier {
@@ -145,8 +144,7 @@ Widget timeRow(String label, DateTime date) {
             height: 1,
           ),
         ),
-        onPressed: () {
-        },
+        onPressed: () {},
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 26),
         ),
@@ -186,7 +184,8 @@ class WorkLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ProceedingStore, OnDutyStateNotifier>(builder: (context, proceedingStore, onDutyState, _) {
+    return Consumer2<ProceedingStore, OnDutyStateNotifier>(
+        builder: (context, proceedingStore, onDutyState, _) {
       WorkLogs attend = onDutyState.attend;
       bool isBreak = attend.breaks.any((acquiredBreak) =>
           acquiredBreak.start.year != 1 && acquiredBreak.end.year == 1);
