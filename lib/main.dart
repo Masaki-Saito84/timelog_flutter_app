@@ -170,6 +170,20 @@ class WorkLog extends StatelessWidget {
       bool isResult = proceedingStore.duty == 'off' && onDutyState.attend!.end != '';
       String _headTitle = '';
 
+      if (proceedingStore.duty == 'on') {
+        _headTitle = '勤務中';
+        if (isBreak) {
+          _headTitle = '休憩中';
+        }
+      } else {
+        if (isResult) {
+          _headTitle = DateFormat('yyyy/M/d (E)')
+              .format(DateTime.parse(onDutyState.attend!.start));
+        } else {
+          _headTitle = DateFormat('yyyy/M/d (E)').format(DateTime.now());
+        }
+      }
+
       return Scaffold(
         appBar: AppBar(
           title: Text(_headTitle),
