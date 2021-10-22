@@ -17,10 +17,10 @@ String purseableDateFormat (DateTime date) {
   return purseableFormat.format(date);
 }
 
-class DutyStore extends ChangeNotifier {
+class ProceedingStore extends ChangeNotifier {
   String? duty;
 
-  DutyStore() {
+  ProceedingStore() {
     init();
   }
 
@@ -98,7 +98,6 @@ class OnDutyStateNotifier extends ChangeNotifier {
   void setPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('work_logs', json.encode(attend!.toJson()));
-    final decodePrefs = json.decode(prefs.getString('work_logs').toString());
   }
 
   void reset() async {
@@ -138,8 +137,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider<DutyStore>(
-          create: (context) => DutyStore(),
+        ChangeNotifierProvider<ProceedingStore>(
+          create: (context) => ProceedingStore(),
         ),
         ChangeNotifierProvider<OnDutyStateNotifier>(
           create: (context) => OnDutyStateNotifier(),
@@ -158,7 +157,6 @@ void main() {
 }
 
 class WorkLog extends StatelessWidget {
-  String _headTitle = '';
   String _time = '';
 
   var swatch = Stopwatch();
@@ -166,67 +164,77 @@ class WorkLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_headTitle),
-      ),
-      body: Center(
-        child: Consumer2<DutyStore, OnDutyStateNotifier>(builder: (context, dutyStore, onDutyState, _) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if(onDutyState.attend.start != '') Text('勤務時間'),
-              if(onDutyState.attend.start != '') timeRow('開始時刻', onDutyState.attend!.start.toString()),
-              if(dutyStore.duty == 'off' && onDutyState.attend!.end != '') timeRow('終了時刻', onDutyState.attend!.end.toString()),
-              if(onDutyState.attend!.start == '' && dutyStore.duty == 'off') Text('業務開始時に右下のボタンを押してください'),
-              if(!onDutyState.attend!.breaks.every((acquiredBreak) => acquiredBreak.start == '' && acquiredBreak.end == '')) Expanded(
-                child: ListView.builder(
-                  itemCount: onDutyState.attend!.breaks.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (!(onDutyState.attend!.breaks[index].start.toString() =='' && onDutyState.attend!.breaks[index].end.toString() == '')) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '休憩' + (index + 1).toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1,
-                            ),
-                          ),
-                          timeRow('開始時刻', onDutyState.attend!.breaks[index].start.toString()),
-                          if(onDutyState.attend!.breaks[index].end.toString() == '') Text('休憩中'),
-                          if(onDutyState.attend!.breaks[index].end.toString() != '') timeRow('終了時刻', onDutyState.attend!.breaks[index].end.toString()),
-                        ],
-                      );
-                    } else {
-                      return SizedBox.shrink();
-                    }
+    return Consumer2<ProceedingStore, OnDutyStateNotifier>(builder: (context, proceedingStore, onDutyState, _) {
+      bool isBreak = onDutyState.attend!.breaks.any((acquiredBreak) => acquiredBreak.start != '' && acquiredBreak.end == '');
+      bool isRecord = onDutyState.attend.start != '';
+      bool isResult = proceedingStore.duty == 'off' && onDutyState.attend!.end != '';
+      String _headTitle = '';
+
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(_headTitle),
+        ),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if(proceedingStore.duty == 'on') Text('勤務時間'),
+            if(isRecord) timeRow('開始時刻', onDutyState.attend!.start.toString()),
+            if(isResult) timeRow('終了時刻', onDutyState.attend!.end.toString()),
+            if(!isRecord && proceedingStore.duty == 'off') Text('業務開始時に右下のボタンを押してください'),
+            if(isRecord || isResult) Expanded(
+              child: ListView.builder(
+                itemCount: onDutyState.attend!.breaks.length,
+                itemBuilder: (BuildContext context, int index) {
+                  bool isInitBreak = onDutyState.attend!.breaks[index].start.toString() == '' && onDutyState.attend!.breaks[index].end.toString() == '';
+                  if (!isInitBreak) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if(isBreak) Text('休憩中'),
+                        Text('休憩' + (index + 1).toString()),
+                        timeRow('開始時刻', onDutyState.attend!.breaks[index].start.toString()),
+                        if(onDutyState.attend!.breaks[index].end.toString() != '') timeRow('終了時刻', onDutyState.attend!.breaks[index].end.toString()),
+                      ],
+                    );
+                  } else if(isResult) {
+                    return ElevatedButton(
+                      child: Text(
+                        '休憩記録を追加',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1,
+                        ),
+                      ),
+                      onPressed: () {
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 26),
+                      ),
+                    );
+                  } else {
+                    return SizedBox.shrink();
                   }
-                )
-              ),
-            ],
-          );
-        })
-      ),
-      floatingActionButton: Container(
-        child: Consumer2<DutyStore, OnDutyStateNotifier>(builder: (context, dutyStore, onDutyState,  _) {
-          bool onBreak = onDutyState.attend!.breaks.any((acquiredBreak) => acquiredBreak.start != '' && acquiredBreak.end == '');
-          return Column(
+                }
+              )
+            ),
+          ],
+        ),
+        floatingActionButton: Container(
+          child: Column(
             verticalDirection: VerticalDirection.up,
             mainAxisSize: MainAxisSize.min,
             children: [
               FloatingActionButton(
                 onPressed: () {
-                  if(onDutyState.attend!.start == '') {
-                    dutyStore.setDuty('on');
+                  if(!isRecord) {
+                    proceedingStore.setDuty('on');
                     onDutyState.addStartTime();
-                  } else if(onDutyState.attend!.start != '' && onDutyState.attend!.end != '') {
+                  } else if(isResult) {
                     onDutyState.reset();
                   } else {
-                    dutyStore.setDuty('off');
+                    proceedingStore.setDuty('off');
                     onDutyState.addEndTime();
-                    if (onBreak) {
+                    if (isBreak) {
                       onDutyState.addBreakEndTime();
                     }
                   }
@@ -242,18 +250,18 @@ class WorkLog extends StatelessWidget {
                   }
                 }) (),
               ),
-              if(dutyStore.duty == 'on') Container(
+              if(proceedingStore.duty == 'on') Container(
                 margin: EdgeInsets.only(bottom: 16.0),
                 child: FloatingActionButton(
                   onPressed: () {
-                    if (onBreak) {
+                    if (isBreak) {
                       onDutyState.addBreakEndTime();
                     } else {
                       onDutyState.addBreakStartTime();
                     }
                   },
                   child: (() {
-                    if (onBreak) {
+                    if (isBreak) {
                       return Icon(Icons.alarm_on);
                     } else {
                       return Icon(Icons.alarm_add);
@@ -262,10 +270,10 @@ class WorkLog extends StatelessWidget {
                 ),
               )
             ],
-          );
-        }),
-      )
-    );
+          )
+        ),
+      );
+    });
   }
 
   @override
@@ -291,7 +299,6 @@ class WorkLog extends StatelessWidget {
   void setWorkEndTime() {
     var now = DateTime.now();
     swatch.stop();
-    var workEndHeadTitle = _headTitle + ' 勤務詳細';
   }
   void allTimeClear() {
     swatch.reset();
