@@ -7,11 +7,11 @@ part of 'breaks.dart';
 // **************************************************************************
 
 Breaks _$BreaksFromJson(Map<String, dynamic> json) => Breaks(
-      json['start'] as String?,
-      json['end'] as String?,
+      DateTime.parse(json['start'] as String),
+      DateTime.parse(json['end'] as String),
     );
 
 Map<String, dynamic> _$BreaksToJson(Breaks instance) => <String, dynamic>{
-      'start': instance.start,
-      'end': instance.end,
+      'start': instance.start.toIso8601String(),
+      'end': instance.end.toIso8601String(),
     };

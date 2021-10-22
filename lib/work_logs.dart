@@ -5,13 +5,13 @@ part 'work_logs.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class WorkLogs {
-  String? start;
-  String? end;
-  List<Breaks>? breaks;
+  DateTime start;
+  DateTime end;
+  List<Breaks> breaks;
   WorkLogs(this.start, this.end, this.breaks);
 
-  factory WorkLogs.fromJson(Map<String, dynamic> json) => _$WorkLogsFromJson(json);
+  factory WorkLogs.fromJson(Map<String, dynamic> json) =>
+      _$WorkLogsFromJson(json);
 
   Map<String, dynamic> toJson() => _$WorkLogsToJson(this);
-
 }

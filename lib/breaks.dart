@@ -3,8 +3,8 @@ part 'breaks.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class Breaks {
-  String? start;
-  String? end;
+  DateTime start;
+  DateTime end;
   Breaks(this.start, this.end);
 
   factory Breaks.fromJson(Map<String, dynamic> json) => _$BreaksFromJson(json);
