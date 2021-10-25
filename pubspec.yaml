@@ -25,6 +25,10 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
+  flutter_datetime_picker:
+    git:
+      url: https://github.com/AlexHartford/flutter_datetime_picker.git
+      ref: master
   intl: ^0.17.0
   json_annotation: ^4.1.0
   json_serializable: ^5.0.2
