@@ -38,7 +38,7 @@ class ProceedingStore extends ChangeNotifier {
   }
 }
 
-class OnDutyStateNotifier extends ChangeNotifier {
+class WorkLogStateNotifier extends ChangeNotifier {
   WorkLogs attend = WorkLogs(
     new DateTime(1),
     new DateTime(1),
@@ -50,7 +50,7 @@ class OnDutyStateNotifier extends ChangeNotifier {
     ],
   );
 
-  OnDutyStateNotifier() {
+  WorkLogStateNotifier() {
     init();
   }
 
@@ -130,29 +130,6 @@ class OnDutyStateNotifier extends ChangeNotifier {
   }
 }
 
-Widget timeRow(String label, DateTime date) {
-  final outputDate = dateFormat(date);
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label + '\n' + outputDate),
-      ElevatedButton(
-        child: Text(
-          '編集',
-          style: TextStyle(
-            fontSize: 12,
-            height: 1,
-          ),
-        ),
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: 26),
-        ),
-      )
-    ],
-  );
-}
-
 void main() {
   runApp(
     MultiProvider(
@@ -160,8 +137,8 @@ void main() {
         ChangeNotifierProvider<ProceedingStore>(
           create: (context) => ProceedingStore(),
         ),
-        ChangeNotifierProvider<OnDutyStateNotifier>(
-          create: (context) => OnDutyStateNotifier(),
+        ChangeNotifierProvider<WorkLogStateNotifier>(
+          create: (context) => WorkLogStateNotifier(),
         ),
       ],
       builder: (context, _) {
@@ -184,9 +161,9 @@ class WorkLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ProceedingStore, OnDutyStateNotifier>(
-        builder: (context, proceedingStore, onDutyState, _) {
-      WorkLogs attend = onDutyState.attend;
+    return Consumer2<ProceedingStore, WorkLogStateNotifier>(
+        builder: (context, proceedingStore, workLogState, _) {
+      WorkLogs attend = workLogState.attend;
       bool isBreak = attend.breaks.any((acquiredBreak) =>
           acquiredBreak.start.year != 1 && acquiredBreak.end.year == 1);
       bool isRecord = attend.start.year != 1;
@@ -215,8 +192,8 @@ class WorkLog extends StatelessWidget {
           children: [
             if (proceedingStore.duty == 'on') Text('勤務時間'),
             if (isResult) Text('勤務時間\n' + totalDuty(attend)),
-            if (isRecord) timeRow('開始時刻', attend.start),
-            if (isResult) timeRow('終了時刻', attend.end),
+            if (isRecord) timeRow(context, 'start'),
+            if (isResult) timeRow(context, 'end'),
             if (!isRecord && proceedingStore.duty == 'off')
               Text('業務開始時に右下のボタンを押してください'),
             if (isRecord || isResult)
@@ -224,8 +201,9 @@ class WorkLog extends StatelessWidget {
                   child: ListView.builder(
                       itemCount: attend.breaks.length,
                       itemBuilder: (BuildContext context, int index) {
-                        final DateTime breakStart = attend.breaks[index].start;
-                        final DateTime breakEnd = attend.breaks[index].end;
+                        final targetBreak = attend.breaks[index];
+                        final DateTime breakStart = targetBreak.start;
+                        final DateTime breakEnd = targetBreak.end;
                         bool isInitBreak =
                             breakStart.year == 1 && breakEnd.year == 1;
                         if (!isInitBreak) {
@@ -237,8 +215,9 @@ class WorkLog extends StatelessWidget {
                                 Text('総休憩時間\n' +
                                     totalBreaks(attend.breaks, true)),
                               Text('休憩' + (index + 1).toString()),
-                              timeRow('開始時刻', breakStart),
-                              if (breakEnd.year != 1) timeRow('終了時刻', breakEnd),
+                              timeRow(context, 'start', index),
+                              if (breakEnd.year != 1)
+                                timeRow(context, 'end', index),
                             ],
                           );
                         } else if (isResult) {
@@ -270,14 +249,14 @@ class WorkLog extends StatelessWidget {
               onPressed: () {
                 if (!isRecord) {
                   proceedingStore.setDuty('on');
-                  onDutyState.addStartTime();
+                  workLogState.addStartTime();
                 } else if (isResult) {
-                  onDutyState.reset();
+                  workLogState.reset();
                 } else {
                   proceedingStore.setDuty('off');
-                  onDutyState.addEndTime();
+                  workLogState.addEndTime();
                   if (isBreak) {
-                    onDutyState.addBreakEndTime();
+                    workLogState.addBreakEndTime();
                   }
                 }
               },
@@ -298,9 +277,9 @@ class WorkLog extends StatelessWidget {
                 child: FloatingActionButton(
                   onPressed: () {
                     if (isBreak) {
-                      onDutyState.addBreakEndTime();
+                      workLogState.addBreakEndTime();
                     } else {
-                      onDutyState.addBreakStartTime();
+                      workLogState.addBreakStartTime();
                     }
                   },
                   child: (() {
@@ -316,6 +295,50 @@ class WorkLog extends StatelessWidget {
         )),
       );
     });
+  }
+
+  Widget timeRow(BuildContext context, String target, [int? index = null]) {
+    String label = target == 'start' ? '開始時刻' : '終了時刻';
+    final DateTime targetDate;
+    final bool isBreaks = index == null ? false : true;
+    final workLogState =
+        Provider.of<WorkLogStateNotifier>(context, listen: false);
+    DateTime? maxTime = workLogState.attend.end;
+    DateTime? minTime = workLogState.attend.start;
+    if (!isBreaks) {
+      if (target == 'start') {
+        targetDate = workLogState.attend.start;
+        minTime = null;
+      } else {
+        targetDate = workLogState.attend.end;
+        maxTime = null;
+      }
+    } else {
+      targetDate = target == 'start'
+          ? workLogState.attend.breaks[index].start
+          : workLogState.attend.breaks[index].end;
+    }
+    final outputDate = dateFormat(targetDate);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label + '\n' + outputDate),
+        ElevatedButton(
+          child: Text(
+            '編集',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1,
+            ),
+          ),
+          onPressed: () {
+          },
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(vertical: 26),
+          ),
+        )
+      ],
+    );
   }
 
   totalBreaks(List<Breaks> breakLog, [bool toString = false]) {
