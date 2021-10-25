@@ -253,7 +253,32 @@ class WorkLog extends StatelessWidget {
                                 height: 1,
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              DatePicker.showDateTimePicker(context,
+                                  currentTime: attend.start,
+                                  locale: LocaleType.jp,
+                                  minTime: workLogState.attend.start,
+                                  maxTime: workLogState.attend.end,
+                                  onConfirm: (startDate) async {
+                                workLogState.editBreakTime('start', startDate,
+                                    attend.breaks.length - 1);
+                                await DatePicker.showDateTimePicker(context,
+                                    currentTime: attend.breaks.last.start,
+                                    locale: LocaleType.jp,
+                                    minTime:
+                                        workLogState.attend.breaks.last.start,
+                                    maxTime: workLogState.attend.end,
+                                    onConfirm: (endDate) {
+                                  workLogState.editBreakTime(
+                                      'end', endDate, attend.breaks.length - 1);
+                                }, onCancel: () {
+                                  workLogState.editBreakTime(
+                                      'start',
+                                      new DateTime(1),
+                                      attend.breaks.length - 1);
+                                });
+                              });
+                            },
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(vertical: 26),
                             ),
