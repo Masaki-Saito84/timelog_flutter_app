@@ -356,6 +356,15 @@ class WorkLog extends StatelessWidget {
             ),
           ),
           onPressed: () {
+            DatePicker.showDateTimePicker(context,
+                currentTime: targetDate,
+                locale: LocaleType.jp,
+                maxTime: maxTime,
+                minTime: minTime, onConfirm: (date) {
+              !isBreaks
+                  ? workLogState.editTime(target, date)
+                  : workLogState.editBreakTime(target, date, index);
+            });
           },
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(vertical: 26),
