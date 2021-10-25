@@ -118,6 +118,16 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void editTime(String target, DateTime editedTime) {
+    if (target == 'start') {
+      attend.start = editedTime;
+    } else {
+      attend.end = editedTime;
+    }
+    setPrefs();
+    notifyListeners();
+  }
+
   void setPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('work_logs', json.encode(attend.toJson()));
