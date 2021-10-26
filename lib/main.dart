@@ -137,6 +137,12 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addBreakCancel() {
+    attend.breaks.removeWhere((breakInfo) => breakInfo.end == null);
+    setPrefs();
+    notifyListeners();
+  }
+
   void setPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('work_logs', json.encode(attend.toJson()));
