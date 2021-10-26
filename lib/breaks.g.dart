@@ -8,10 +8,10 @@ part of 'breaks.dart';
 
 Breaks _$BreaksFromJson(Map<String, dynamic> json) => Breaks(
       DateTime.parse(json['start'] as String),
-      DateTime.parse(json['end'] as String),
+      json['end'] == null ? null : DateTime.parse(json['end'] as String),
     );
 
 Map<String, dynamic> _$BreaksToJson(Breaks instance) => <String, dynamic>{
       'start': instance.start.toIso8601String(),
-      'end': instance.end.toIso8601String(),
+      'end': instance.end?.toIso8601String(),
     };

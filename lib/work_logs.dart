@@ -5,8 +5,8 @@ part 'work_logs.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class WorkLogs {
-  DateTime start;
-  DateTime end;
+  DateTime? start;
+  DateTime? end;
   List<Breaks> breaks;
   WorkLogs(this.start, this.end, this.breaks);
 

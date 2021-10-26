@@ -59,14 +59,9 @@ class WorkLogStateNotifier extends ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if (prefs.getString('work_logs') == null) {
       attend = WorkLogs(
-        new DateTime(1),
-        new DateTime(1),
-        [
-          Breaks(
-            new DateTime(1),
-            new DateTime(1),
-          )
-        ],
+        null,
+        null,
+        [],
       );
       prefs.setString('work_logs', json.encode(attend.toJson()));
     } else {
@@ -98,22 +93,17 @@ class WorkLogStateNotifier extends ChangeNotifier {
   }
 
   void addBreakStartTime() {
-    attend.breaks.forEach((acquiredBreak) {
-      if (acquiredBreak.start.year == 1) {
-        acquiredBreak.start = DateTime.now();
-        setPrefs();
-        notifyListeners();
-      }
-    });
+    attend.breaks.add(Breaks(DateTime.now(), null));
+    setPrefs();
+    notifyListeners();
   }
 
   void addBreakEndTime() {
     attend.breaks.forEach((acquiredBreak) {
-      if (acquiredBreak.end.year == 1) {
+      if (acquiredBreak.end == null) {
         acquiredBreak.end = DateTime.now();
       }
     });
-    attend.breaks.add(Breaks(new DateTime(1), new DateTime(1)));
     setPrefs();
     notifyListeners();
   }
@@ -128,13 +118,19 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void editBreakTime(String target, DateTime editedTime, int index) {
-    if (target == 'start') {
-      attend.breaks[index].start = editedTime;
+  void editBreakTime(String target, DateTime editedTime, int? index) {
+    if (index == null) {
+      if (target == 'start') {
+        attend.breaks.add(Breaks(editedTime, null));
+      } else {
+        final targetBreakInfo =
+            attend.breaks.where((breakInfo) => breakInfo.end == null);
+      }
     } else {
-      attend.breaks[index].end = editedTime;
-      if (attend.breaks[index] == attend.breaks.last) {
-        attend.breaks.add(Breaks(new DateTime(1), new DateTime(1)));
+      if (target == 'start') {
+        attend.breaks[index].start = editedTime;
+      } else {
+        attend.breaks[index].end = editedTime;
       }
     }
     setPrefs();
@@ -188,10 +184,10 @@ class WorkLog extends StatelessWidget {
     return Consumer2<ProceedingStore, WorkLogStateNotifier>(
         builder: (context, proceedingStore, workLogState, _) {
       WorkLogs attend = workLogState.attend;
-      bool isBreak = attend.breaks.any((acquiredBreak) =>
-          acquiredBreak.start.year != 1 && acquiredBreak.end.year == 1);
-      bool isRecord = attend.start.year != 1;
-      bool isResult = proceedingStore.duty == 'off' && attend.end.year != 1;
+      bool isBreak =
+          attend.breaks.any((acquiredBreak) => acquiredBreak.end == null);
+      bool isRecord = attend.start != null;
+      bool isResult = proceedingStore.duty == 'off' && attend.end != null;
       String _headTitle = '';
 
       if (proceedingStore.duty == 'on') {
@@ -201,7 +197,7 @@ class WorkLog extends StatelessWidget {
         }
       } else {
         if (isResult) {
-          _headTitle = DateFormat('yyyy/M/d (E)').format(attend.start);
+          _headTitle = DateFormat('yyyy/M/d (E)').format(attend.start!);
         } else {
           _headTitle = DateFormat('yyyy/M/d (E)').format(DateTime.now());
         }
@@ -225,68 +221,59 @@ class WorkLog extends StatelessWidget {
                   child: ListView.builder(
                       itemCount: attend.breaks.length,
                       itemBuilder: (BuildContext context, int index) {
-                        final targetBreak = attend.breaks[index];
-                        final DateTime breakStart = targetBreak.start;
-                        final DateTime breakEnd = targetBreak.end;
-                        bool isInitBreak =
-                            breakStart.year == 1 && breakEnd.year == 1;
-                        if (!isInitBreak) {
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (isBreak) Text('休憩中'),
-                              if (isResult && index == 0)
-                                Text('総休憩時間\n' +
-                                    totalBreaks(attend.breaks, true)),
-                              Text('休憩' + (index + 1).toString()),
-                              timeRow(context, 'start', index),
-                              if (breakEnd.year != 1)
-                                timeRow(context, 'end', index),
-                            ],
-                          );
-                        } else if (isResult) {
-                          return ElevatedButton(
-                            child: Text(
-                              '休憩記録を追加',
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1,
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isResult && index == 0)
+                              Text(
+                                  '総休憩時間\n' + totalBreaks(attend.breaks, true)),
+                            Text('休憩' + (index + 1).toString()),
+                            // if (attend.breaks.length + 1 != index)
+                            timeRow(context, 'start', index),
+                            if (attend.breaks[index].end != null)
+                              timeRow(context, 'end', index),
+                            if (isResult && index == attend.breaks.length - 1)
+                              ElevatedButton(
+                                child: Text(
+                                  '休憩記録を追加',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  DatePicker.showDateTimePicker(context,
+                                      currentTime: attend.start,
+                                      locale: LocaleType.jp,
+                                      minTime: workLogState.attend.start,
+                                      maxTime: workLogState.attend.end,
+                                      onConfirm: (startDate) async {
+                                    workLogState.editBreakTime(
+                                        'start', startDate, null);
+                                    await DatePicker.showDateTimePicker(context,
+                                        currentTime: attend.breaks.last.start,
+                                        locale: LocaleType.jp,
+                                        minTime: workLogState
+                                            .attend.breaks.last.start,
+                                        maxTime: workLogState.attend.end,
+                                        onConfirm: (endDate) {
+                                      final targetIndex = attend.breaks
+                                          .indexWhere((breakInfo) =>
+                                              breakInfo.end == null);
+                                      workLogState.editBreakTime(
+                                          'end', endDate, targetIndex);
+                                    }, onCancel: () {
+                                      workLogState.addBreakCancel();
+                                    });
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 26),
+                                ),
                               ),
-                            ),
-                            onPressed: () {
-                              DatePicker.showDateTimePicker(context,
-                                  currentTime: attend.start,
-                                  locale: LocaleType.jp,
-                                  minTime: workLogState.attend.start,
-                                  maxTime: workLogState.attend.end,
-                                  onConfirm: (startDate) async {
-                                workLogState.editBreakTime('start', startDate,
-                                    attend.breaks.length - 1);
-                                await DatePicker.showDateTimePicker(context,
-                                    currentTime: attend.breaks.last.start,
-                                    locale: LocaleType.jp,
-                                    minTime:
-                                        workLogState.attend.breaks.last.start,
-                                    maxTime: workLogState.attend.end,
-                                    onConfirm: (endDate) {
-                                  workLogState.editBreakTime(
-                                      'end', endDate, attend.breaks.length - 1);
-                                }, onCancel: () {
-                                  workLogState.editBreakTime(
-                                      'start',
-                                      new DateTime(1),
-                                      attend.breaks.length - 1);
-                                });
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 26),
-                            ),
-                          );
-                        } else {
-                          return SizedBox.shrink();
-                        }
-                      })),
+                          ],
+                        );
+                      }))
           ],
         ),
         floatingActionButton: Container(
@@ -348,7 +335,7 @@ class WorkLog extends StatelessWidget {
 
   Widget timeRow(BuildContext context, String target, [int? index = null]) {
     String label = target == 'start' ? '開始時刻' : '終了時刻';
-    final DateTime targetDate;
+    final DateTime? targetDate;
     final bool isBreaks = index == null ? false : true;
     final workLogState =
         Provider.of<WorkLogStateNotifier>(context, listen: false);
@@ -356,10 +343,10 @@ class WorkLog extends StatelessWidget {
     DateTime? minTime = workLogState.attend.start;
     if (!isBreaks) {
       if (target == 'start') {
-        targetDate = workLogState.attend.start;
+        targetDate = workLogState.attend.start!;
         minTime = null;
       } else {
-        targetDate = workLogState.attend.end;
+        targetDate = workLogState.attend.end!;
         maxTime = null;
       }
     } else {
@@ -367,7 +354,7 @@ class WorkLog extends StatelessWidget {
           ? workLogState.attend.breaks[index].start
           : workLogState.attend.breaks[index].end;
     }
-    final outputDate = dateFormat(targetDate);
+    final outputDate = dateFormat(targetDate!);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -404,12 +391,14 @@ class WorkLog extends StatelessWidget {
 
     breakLog.asMap().forEach((index, breakInfo) {
       final DateTime start = breakInfo.start;
-      final DateTime end = breakInfo.end;
-      final duration = end.difference(start);
-      if (index == 0) {
-        totalDuration = duration;
-      } else {
-        totalDuration += duration;
+      final DateTime? end = breakInfo.end;
+      if (end != null) {
+        final duration = end.difference(start);
+        if (index == 0) {
+          totalDuration = duration;
+        } else {
+          totalDuration += duration;
+        }
       }
     });
 
@@ -420,13 +409,13 @@ class WorkLog extends StatelessWidget {
   }
 
   String totalDuty(WorkLogs workLog) {
-    final DateTime start = workLog.start;
-    final DateTime end = workLog.end;
+    final DateTime? start = workLog.start;
+    final DateTime? end = workLog.end;
     final List<Breaks> breaks = workLog.breaks;
-    var totalDuration = end.difference(start);
+    var totalDuration = end!.difference(start!);
 
-    if (!breaks
-        .every((breaks) => breaks.start.year == 1 && breaks.end.year == 1)) {
+    if (breaks.isNotEmpty &&
+        breaks.every((breaksInfo) => breaksInfo.end != null)) {
       totalDuration -= totalBreaks(breaks);
     }
     return totalDuration.toString().split('.').first.padLeft(8, "0");
