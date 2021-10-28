@@ -9,7 +9,7 @@ import 'work_logs.dart';
 import 'breaks.dart';
 
 String dateFormat(DateTime date) {
-  final outputFormat = DateFormat('yyyy/MM/dd(E) HH:mm:ss');
+  final outputFormat = DateFormat('yyyy/MM/dd(E) HH:mm');
   return outputFormat.format(date);
 }
 
