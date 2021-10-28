@@ -282,23 +282,23 @@ class WorkLog extends StatelessWidget {
                                   DatePicker.showDateTimePicker(context,
                                       currentTime: attend.start,
                                       locale: LocaleType.jp,
-                                      minTime: workLogState.attend.start,
-                                      maxTime: workLogState.attend.end,
+                                      minTime: attend.start,
+                                      maxTime: attend.end,
                                       onConfirm: (startDate) async {
                                     workLogState.editBreakTime(
-                                        'start', startDate, null);
-                                    await DatePicker.showDateTimePicker(context,
-                                        currentTime: attend.breaks.last.start,
+                                        'start', startDate);
+                                    DateTime currentTime = attend.breaks
+                                        .firstWhere((breakInfo) =>
+                                            breakInfo.end == null)
+                                        .start;
+                                    DatePicker.showDateTimePicker(context,
+                                        currentTime: currentTime,
                                         locale: LocaleType.jp,
-                                        minTime: workLogState
-                                            .attend.breaks.last.start,
-                                        maxTime: workLogState.attend.end,
+                                        minTime: currentTime,
+                                        maxTime: attend.end,
                                         onConfirm: (endDate) {
-                                      final targetIndex = attend.breaks
-                                          .indexWhere((breakInfo) =>
-                                              breakInfo.end == null);
                                       workLogState.editBreakTime(
-                                          'end', endDate, targetIndex);
+                                          'end', endDate);
                                     }, onCancel: () {
                                       workLogState.addBreakCancel();
                                     });
