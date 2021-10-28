@@ -32,6 +32,7 @@ dependencies:
   intl: ^0.17.0
   json_annotation: ^4.1.0
   json_serializable: ^5.0.2
+  overlapping_time: ^0.1.0
   provider: ^6.0.0
   shared_preferences: ^2.0.8
 
