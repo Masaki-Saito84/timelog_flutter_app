@@ -113,16 +113,19 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void editBreakTime(String target, DateTime editedTime, int? index) {
-    if (index == null) {
-      if (target == 'start') {
+  void editBreakTime(String target, DateTime editedTime, [int? index]) {
+    bool isAddBreak = index == null;
+    bool isEditStart = target == 'start';
+    if (isAddBreak) {
+      if (isEditStart) {
         attend.breaks.add(Breaks(editedTime, null));
       } else {
-        final targetBreakInfo =
-            attend.breaks.where((breakInfo) => breakInfo.end == null);
+        final targetIndex =
+            attend.breaks.indexWhere((breakInfo) => breakInfo.end == null);
+        attend.breaks[targetIndex].end = editedTime;
       }
     } else {
-      if (target == 'start') {
+      if (isEditStart) {
         attend.breaks[index].start = editedTime;
       } else {
         attend.breaks[index].end = editedTime;
