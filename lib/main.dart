@@ -424,7 +424,7 @@ class WorkLog extends StatelessWidget {
   }
 
   totalBreaks(List<Breaks> breakLog, [bool toString = false]) {
-    var totalDuration;
+    Duration totalDuration = Duration(hours: 0, minutes: 0, seconds: 0);
 
     breakLog.asMap().forEach((index, breakInfo) {
       final DateTime start = breakInfo.start;
@@ -449,7 +449,7 @@ class WorkLog extends StatelessWidget {
     final DateTime? start = workLog.start;
     final DateTime? end = workLog.end;
     final List<Breaks> breaks = workLog.breaks;
-    var totalDuration = end!.difference(start!);
+    Duration totalDuration = end!.difference(start!);
 
     if (breaks.isNotEmpty &&
         breaks.every((breaksInfo) => breaksInfo.end != null)) {
