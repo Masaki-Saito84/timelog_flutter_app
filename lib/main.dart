@@ -143,6 +143,12 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void breakDelete(int index) {
+    attend.breaks.remove(attend.breaks[index]);
+    setPrefs();
+    notifyListeners();
+  }
+
   void setPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('work_logs', json.encode(attend.toJson()));
@@ -233,10 +239,30 @@ class WorkLog extends StatelessWidget {
                             if (isResult && index == 0)
                               Text(
                                   '総休憩時間\n' + totalBreaks(attend.breaks, true)),
-                            Text('休憩' + (index + 1).toString()),
-                            // if (attend.breaks.length + 1 != index)
-                            timeRow(context, 'start', index),
-                            if (attend.breaks[index].end != null)
+                            if (attend.breaks.length != 0)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('休憩' + (index + 1).toString()),
+                                  ElevatedButton(
+                                    child: Text(
+                                      '削除',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        height: 1,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      workLogState.breakDelete(index);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 26),
+                                    ),
+                                  )
+                                ],
+                              ),
                               timeRow(context, 'end', index),
                             if (isResult && index == attend.breaks.length - 1)
                               ElevatedButton(
