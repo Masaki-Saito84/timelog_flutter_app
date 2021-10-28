@@ -387,11 +387,16 @@ class WorkLog extends StatelessWidget {
         maxTime = null;
       }
     } else {
-      targetDate = target == 'start'
-          ? workLogState.attend.breaks[index].start
-          : workLogState.attend.breaks[index].end;
+      if (target == 'start') {
+        targetDate = workLogState.attend.breaks[index].start;
+        maxTime = workLogState.attend.breaks[index].end;
+      } else {
+        targetDate = workLogState.attend.breaks[index].end;
+        minTime = workLogState.attend.breaks[index].start;
+      }
     }
     final outputDate = dateFormat(targetDate!);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
