@@ -64,14 +64,17 @@ class WorkLogStateNotifier extends ChangeNotifier {
       final decodePrefs =
           await json.decode(prefs.getString('work_logs').toString());
       final String start = await decodePrefs['start'];
-      final String end = await decodePrefs['end'];
+      final String? end = await decodePrefs['end'];
       final List<Breaks> breaks = await decodePrefs['breaks']
           .map<Breaks>((breakInfo) => new Breaks(
               DateTime.parse(breakInfo['start']),
               DateTime.parse(breakInfo['end'])))
           .toList();
-
-      attend = WorkLogs(DateTime.parse(start), DateTime.parse(end), breaks);
+      if (end != 'null') {
+        attend = WorkLogs(DateTime.parse(start), null, breaks);
+      } else {
+        attend = WorkLogs(DateTime.parse(start), DateTime.parse(end!), breaks);
+      }
     }
     notifyListeners();
   }
