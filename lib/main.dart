@@ -132,8 +132,37 @@ class WorkLogStateNotifier extends ChangeNotifier {
         attend.breaks[index].end = editedTime;
       }
     }
+
+    if (attend.breaks.length > 1) {
+      margeOverlappingBreak();
+    }
     setPrefs();
     notifyListeners();
+  }
+
+  void margeOverlappingBreak() {
+    if (attend.breaks.every((element) => element.end != null)) {
+      var overlapping = getOverlappingBreaks();
+      if (overlapping.length > 1) {
+        while (overlapping.length > 1) {
+          var beforestart =
+              overlapping.first.start.isAfter(overlapping.last.start)
+                  ? overlapping.last.start
+                  : overlapping.first.start;
+          var afterend = overlapping.first.end.isBefore(overlapping.last.end)
+              ? overlapping.last.end
+              : overlapping.first.end;
+          attend.breaks.removeWhere((breakInfo) {
+            return (breakInfo.start == overlapping.first.start &&
+                    breakInfo.end == overlapping.first.end) ||
+                (breakInfo.start == overlapping.last.start &&
+                    breakInfo.end == overlapping.last.end);
+          });
+          attend.breaks.add(Breaks(beforestart, afterend));
+          overlapping = getOverlappingBreaks();
+        }
+      }
+    }
   }
 
   List getOverlappingBreaks() {
