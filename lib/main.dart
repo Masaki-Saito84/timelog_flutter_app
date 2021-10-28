@@ -136,6 +136,24 @@ class WorkLogStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  List getOverlappingBreaks() {
+    List<DateTimeRange?> breaksConversionRange = attend.breaks.map((breakInfo) {
+      if (breakInfo.end != null) {
+        return DateTimeRange(start: breakInfo.start, end: breakInfo.end!);
+      }
+    }).toList();
+
+    if (breaksConversionRange.length > 1) {
+      Map<int, List<ComparingResult>> searchResults =
+          findOverlap(ranges: breaksConversionRange, allowTouchingRanges: true);
+      if (searchResults[2]!.length > 0) {
+        return searchResults[2]!.first.comparedRanges;
+      }
+      return [];
+    }
+    return [];
+  }
+
   void addBreakCancel() {
     attend.breaks.removeWhere((breakInfo) => breakInfo.end == null);
     setPrefs();
