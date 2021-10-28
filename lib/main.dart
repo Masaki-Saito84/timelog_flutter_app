@@ -231,7 +231,8 @@ class WorkLog extends StatelessWidget {
             if (isRecord || isResult)
               Expanded(
                   child: ListView.builder(
-                      itemCount: attend.breaks.length,
+                      itemCount:
+                          attend.breaks.length == 0 ? 1 : attend.breaks.length,
                       itemBuilder: (BuildContext context, int index) {
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -263,8 +264,14 @@ class WorkLog extends StatelessWidget {
                                   )
                                 ],
                               ),
+                            if (attend.breaks.length != 0)
+                              timeRow(context, 'start', index),
+                            if (attend.breaks.length != 0 &&
+                                attend.breaks[index].end != null)
                               timeRow(context, 'end', index),
-                            if (isResult && index == attend.breaks.length - 1)
+                            if (isResult &&
+                                (index == attend.breaks.length - 1 ||
+                                    attend.breaks.length == 0))
                               ElevatedButton(
                                 child: Text(
                                   '休憩記録を追加',
