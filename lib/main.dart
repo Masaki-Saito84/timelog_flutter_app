@@ -41,14 +41,9 @@ class ProceedingStore extends ChangeNotifier {
 
 class WorkLogStateNotifier extends ChangeNotifier {
   WorkLogs attend = WorkLogs(
-    new DateTime(1),
-    new DateTime(1),
-    [
-      Breaks(
-        new DateTime(1),
-        new DateTime(1),
-      )
-    ],
+    null,
+    null,
+    [],
   );
 
   WorkLogStateNotifier() {
