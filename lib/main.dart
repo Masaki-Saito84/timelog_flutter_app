@@ -268,101 +268,115 @@ class WorkLog extends StatelessWidget {
         appBar: AppBar(
           title: Text(_headTitle),
         ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (proceedingStore.duty == 'on') Text('勤務時間'),
-            if (isResult) Text('勤務時間\n' + totalDuty(attend)),
-            if (isRecord) timeRow(context, 'start'),
-            if (isResult) timeRow(context, 'end'),
-            if (!isRecord && proceedingStore.duty == 'off')
-              Text('業務開始時に右下のボタンを押してください'),
-            if (isRecord || isResult)
-              Expanded(
-                  child: ListView.builder(
-                      itemCount:
-                          attend.breaks.length == 0 ? 1 : attend.breaks.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (isResult && index == 0)
-                              Text(
-                                  '総休憩時間\n' + totalBreaks(attend.breaks, true)),
-                            if (attend.breaks.length != 0)
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('休憩' + (index + 1).toString()),
-                                  ElevatedButton(
-                                    child: Text(
-                                      '削除',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        height: 1,
+        body: Container(
+          padding: EdgeInsets.only(left: 15, right: 15),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (proceedingStore.duty == 'on')
+                Text(
+                  '勤務時間',
+                  textAlign: TextAlign.center,
+                ),
+              if (isResult)
+                Text(
+                  '勤務時間\n' + totalDuty(attend),
+                  textAlign: TextAlign.center,
+                ),
+              if (isRecord) timeRow(context, 'start'),
+              if (isResult) timeRow(context, 'end'),
+              if (!isRecord && proceedingStore.duty == 'off')
+                Text('業務開始時に右下のボタンを押してください'),
+              if (isRecord || isResult)
+                Expanded(
+                    child: ListView.builder(
+                        itemCount: attend.breaks.length == 0
+                            ? 1
+                            : attend.breaks.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isResult && index == 0)
+                                Text(
+                                  '総休憩時間\n' + totalBreaks(attend.breaks, true),
+                                  textAlign: TextAlign.center,
+                                ),
+                              if (attend.breaks.length != 0)
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('休憩' + (index + 1).toString()),
+                                    ElevatedButton(
+                                      child: Text(
+                                        '削除',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          height: 1,
+                                        ),
                                       ),
+                                      onPressed: () {
+                                        workLogState.breakDelete(index);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 26),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              if (attend.breaks.length != 0)
+                                timeRow(context, 'start', index),
+                              if (attend.breaks.length != 0 &&
+                                  attend.breaks[index].end != null)
+                                timeRow(context, 'end', index),
+                              if (isResult &&
+                                  (index == attend.breaks.length - 1 ||
+                                      attend.breaks.length == 0))
+                                ElevatedButton(
+                                  child: Text(
+                                    '休憩記録を追加',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      height: 1,
                                     ),
-                                    onPressed: () {
-                                      workLogState.breakDelete(index);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 26),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            if (attend.breaks.length != 0)
-                              timeRow(context, 'start', index),
-                            if (attend.breaks.length != 0 &&
-                                attend.breaks[index].end != null)
-                              timeRow(context, 'end', index),
-                            if (isResult &&
-                                (index == attend.breaks.length - 1 ||
-                                    attend.breaks.length == 0))
-                              ElevatedButton(
-                                child: Text(
-                                  '休憩記録を追加',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    height: 1,
+                                  ),
+                                  onPressed: () {
+                                    DatePicker.showDateTimePicker(context,
+                                        currentTime: attend.start,
+                                        locale: LocaleType.jp,
+                                        minTime: attend.start,
+                                        maxTime: attend.end,
+                                        onConfirm: (startDate) async {
+                                      workLogState.editBreakTime(
+                                          'start', startDate);
+                                      DateTime currentTime = attend.breaks
+                                          .firstWhere((breakInfo) =>
+                                              breakInfo.end == null)
+                                          .start;
+                                      DatePicker.showDateTimePicker(context,
+                                          currentTime: currentTime,
+                                          locale: LocaleType.jp,
+                                          minTime: currentTime,
+                                          maxTime: attend.end,
+                                          onConfirm: (endDate) {
+                                        workLogState.editBreakTime(
+                                            'end', endDate);
+                                      }, onCancel: () {
+                                        workLogState.addBreakCancel();
+                                      });
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(vertical: 26),
                                   ),
                                 ),
-                                onPressed: () {
-                                  DatePicker.showDateTimePicker(context,
-                                      currentTime: attend.start,
-                                      locale: LocaleType.jp,
-                                      minTime: attend.start,
-                                      maxTime: attend.end,
-                                      onConfirm: (startDate) async {
-                                    workLogState.editBreakTime(
-                                        'start', startDate);
-                                    DateTime currentTime = attend.breaks
-                                        .firstWhere((breakInfo) =>
-                                            breakInfo.end == null)
-                                        .start;
-                                    DatePicker.showDateTimePicker(context,
-                                        currentTime: currentTime,
-                                        locale: LocaleType.jp,
-                                        minTime: currentTime,
-                                        maxTime: attend.end,
-                                        onConfirm: (endDate) {
-                                      workLogState.editBreakTime(
-                                          'end', endDate);
-                                    }, onCancel: () {
-                                      workLogState.addBreakCancel();
-                                    });
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 26),
-                                ),
-                              ),
-                          ],
-                        );
-                      }))
-          ],
+                            ],
+                          );
+                        }))
+            ],
+          ),
         ),
         floatingActionButton: Container(
             child: Column(
